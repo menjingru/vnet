@@ -57,8 +57,7 @@ def bbox_annos_():  # 产生bbox_annos文件，处理所有图的坐标转换
     bbox_annos.to_excel(new_bbox_annos_path)  # 保存到new_bbox_annos_path
 
 
-if shouci:
-    bbox_annos_()
+bbox_annos_()
 
 
 def name(xml_path):  # 从xml文件中取得name
