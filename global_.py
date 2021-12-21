@@ -12,7 +12,7 @@ wrong_img_path = r"D:\datasets\wrong_img.xls"
 zhibiao_path = r'D:\datasets\sk_output\zhibiao'
 model_path = r'D:\datasets\sk_output\model'
 
-shouci = True
+
 xitong = "windows"  # "linux"
 
 
