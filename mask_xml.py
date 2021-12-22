@@ -1,4 +1,5 @@
 from global_ import *
+from global_annos import *
 from mask_xml_def import for_one_,read_data,resample
 import numpy as np
 import pandas
