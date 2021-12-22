@@ -6,7 +6,7 @@ import os
 
 
 
-bbox_annos_()
+
 anno_name_list = annos()  # 有结节图的名字
 print(len(anno_name_list))
 wrony = []  # 染色失败的标签
