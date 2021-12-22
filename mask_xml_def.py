@@ -204,4 +204,7 @@ def resample(imgs, spacing, new_spacing=[1,1,1]):  # 重采样 ，即把原图�
         return imgs
     else:
         raise ValueError('wrong shape')  # 本代码只能处理3维数据
+        
+bbox_annos_()
+
 
