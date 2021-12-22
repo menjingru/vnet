@@ -5,6 +5,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"  # 使用gpu0
 
 
 from global_ import *
+from global_annos import *
 from train_def import *
 from vnet import VNet
 import time
