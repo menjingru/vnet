@@ -78,7 +78,7 @@ def test_model(model, device, test_loader, epoch,test):    # 加了个test  1是
                 for i in range(len(data_cpu)):  # 取出改batch中的单张图
                     true_img_tensor = data_cpu[i][0]  # 取图得到张量tensor，注意这里的[0]是因为我们在dataset部分给图增加了一个维度
                     true_label_tensor = my_label_cpu[i]  # 取得预测的二值分割张量tensor
-                    use_plot_2d(true_img_tensor,true_label_tensor,z=16,batch_index=batch_index,i=i,true_label=True)  # 存图，这里存标签图到pic
+                    use_plot_2d(true_img_tensor,true_label_tensor,z=8,batch_index=batch_index,i=i,true_label=True)  # 存图，这里存标签图到pic
 
             data, target = data.to(device), target.to(device)
             torch.cuda.empty_cache()
@@ -104,7 +104,7 @@ def test_model(model, device, test_loader, epoch,test):    # 加了个test  1是
                 for i in range(len(data_cpu)):
                     img_tensor = data_cpu[i][0]  # 96 * 96 * 96
                     label_tensor = torch.gt(my_output_cpu[i][1], my_output_cpu[i][0])  # 96 * 96 * 96
-                    use_plot_2d(img_tensor,label_tensor,z=16,batch_index=batch_index,i=i)
+                    use_plot_2d(img_tensor,label_tensor,z=8,batch_index=batch_index,i=i)
 
         test_loss /= len(test_loader)
         PA /= len(test_loader)
