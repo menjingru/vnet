@@ -28,7 +28,7 @@ label_test_path = []
 for ii in range(6,7):  ### 8,9   测试集
     data_test_path.append('/home/zhangfuchun/menjingru/dataset/sk_output/bbox_image/subset%d' % ii)
     label_test_path.append('/home/zhangfuchun/menjingru/dataset/sk_output/bbox_mask/subset%d' % ii)
-dataset_test = myDataset(data_test_path, label_test_path, annos)
+dataset_test = myDataset(data_test_path, label_test_path)
 test_loader = torch.utils.data.DataLoader(dataset_test,
                                               batch_size=BATCH_SIZE, shuffle=False,
                                               num_workers=16)
