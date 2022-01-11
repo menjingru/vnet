@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import os
 import pandas as pd
 from scipy.ndimage.interpolation import zoom
+import xlrd
 
 
 # 在开始之前，由于我们需要只保留有结节的图像，因此从annotations中取得有结节的图像名字。①进行结节中心的坐标变换，并保存到 bbox_annos
