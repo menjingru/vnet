@@ -12,6 +12,9 @@ wrong_img_path = r"D:\datasets\wrong_img.xls"
 zhibiao_path = r'D:\datasets\sk_output\zhibiao'
 model_path = r'D:\datasets\sk_output\model'
 
+from pathlib import Path
+zhibiao_path1 = Path(zhibiao_path)
+zhibiao_path1.mkdir(exist_ok=True,parents=True)
 
 xitong = "windows"  # "linux"
 
