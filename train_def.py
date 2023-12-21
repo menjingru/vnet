@@ -168,7 +168,7 @@ class myDataset(Dataset):
             cut_list.append(a)
             cut_list.append(b)
 
-
+        cut_list = [round(i) for i in cut_list]
         img = img[cut_list[0]:cut_list[1],cut_list[2]:cut_list[3],cut_list[4]:cut_list[5]]   ###  z,y,x
         label = label[cut_list[0]:cut_list[1],cut_list[2]:cut_list[3],cut_list[4]:cut_list[5]]   ###  z,y,x
 
