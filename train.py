@@ -86,7 +86,7 @@ for epoch in range(1, EPOCH + 1):  # 每一个epoch  训练一轮   检测一轮
     train_loss1 = train_loss  # 训练损失
     train_loss_list.append(train_loss)  # 记录每个epoch训练损失
     train_loss_pd = pd.DataFrame(train_loss_list)  # 存成excel格式
-    train_loss_pd.to_excel(zhibiao_path + "/第%d个epoch的训练损失.xls" %(epoch))
+    train_loss_pd.to_excel(zhibiao_path + "/第%d个epoch的训练损失.xlsx" %(epoch))
 
     torch.save(model, model_path+fengefu+'train_model.pth')  # 保存训练模型
     torch.cuda.empty_cache()  # 清理内存
@@ -97,7 +97,7 @@ for epoch in range(1, EPOCH + 1):  # 每一个epoch  训练一轮   检测一轮
         dice1 = valid_zhibiao[2]  # 记录dice值
         valid_loss_list.append(valid_loss)  # 验证损失
         valid_loss_pd = pd.DataFrame(valid_loss_list)  # 存成excel格式
-        valid_loss_pd.to_excel(zhibiao_path + "/第%d个epoch的验证损失.xls" % (epoch))
+        valid_loss_pd.to_excel(zhibiao_path + "/第%d个epoch的验证损失.xlsx" % (epoch))
 
         if epoch == valid_epoch_each:  # 第一此验证，如：epoch==5
             torch.save(model, model_path+fengefu+'best_model.pth')  # 保存为最好模型
@@ -111,7 +111,7 @@ for epoch in range(1, EPOCH + 1):  # 每一个epoch  训练一轮   检测一轮
             torch.save(model, model_path+fengefu+'best_model.pth')  # 保存为最好模型，这里是直接覆盖了之前的best_model
             zhibiao = valid_zhibiao  # 把指标也记录一下
             zhibiao_pd = pd.DataFrame(zhibiao)  # 存成excel格式
-            zhibiao_pd.to_excel(zhibiao_path + "/目前为止最合适的model指标：第%d个epoch的验证指标[PA, IOU, DICE, P, R, F1].xls" % epoch)
+            zhibiao_pd.to_excel(zhibiao_path + "/目前为止最合适的model指标：第%d个epoch的验证指标[PA, IOU, DICE, P, R, F1].xlsx" % epoch)
         else:
             pass  # 验证损失没有变小则不做处理
 
@@ -123,7 +123,7 @@ train_time = end-start  # 记录总耗时
 print('Running time: %s Seconds' % train_time)  # 打印总耗时
 time_list = list([train_time])  # 总耗时转化为列表
 train_time_pd = pd.DataFrame(time_list)  # 存成excel格式
-train_time_pd.to_excel(zhibiao_path + "/总epoch的训练时间（不包含测试）.xls")
+train_time_pd.to_excel(zhibiao_path + "/总epoch的训练时间（不包含测试）.xlsx")
 
 
 # 训练和验证 结束，保存的最好模型在 model_path +fengefu +'best_model.pth'，用它进行测试
@@ -143,9 +143,9 @@ test_loss_list.append(test_loss)  # 测试损失
 test_zhibiao_list.append(test_zhibiao)  # 测试指标
 
 test_loss_pd = pd.DataFrame(test_loss_list)  # 存成excel格式
-test_loss_pd.to_excel(zhibiao_path + "/测试损失.xls")
+test_loss_pd.to_excel(zhibiao_path + "/测试损失.xlsx")
 test_zhibiao_pd = pd.DataFrame(test_zhibiao_list)  # 存成excel格式
-test_zhibiao_pd.to_excel(zhibiao_path + "/测试验证指标[PA, IOU, DICE, P, R, F1].xls")
+test_zhibiao_pd.to_excel(zhibiao_path + "/测试验证指标[PA, IOU, DICE, P, R, F1].xlsx")
 
 
 test_end = time.perf_counter()  # 记录测试结束时间
@@ -153,4 +153,4 @@ test_time =test_end-test_start  # 记录测试耗时
 print('Running time: %s Seconds' % test_time)  # 打印总耗时
 test_time_list = list([test_time])  # 测试时间转化为列表
 test_time_pd = pd.DataFrame(test_time_list)  # 存成excel格式
-test_time_pd.to_excel(zhibiao_path + "/测试时间.xls")
+test_time_pd.to_excel(zhibiao_path + "/测试时间.xlsx")
