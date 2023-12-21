@@ -74,14 +74,14 @@ valid_loss_list = []  # 用来记录验证损失
 
 minnum = 0  # 寻找最小损失，损失最小意味着模型最佳
 mome = 0.99  # 动量，可以认为是前冲的速度
+optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=mome, weight_decay=1e-8)  # weight_decay质量，认为是前冲的惯性
+scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 3, gamma=0.1, last_epoch=-1)  # 设置优化器在训练时改变，每3轮lr变为原来的0.1倍,如果中途停止则从头开始
 
 train_loss1 = 0.0
 lr = 1e-1
 for epoch in range(1, EPOCH + 1):  # 每一个epoch  训练一轮   检测一轮
     if epoch ==180:  # 180轮时动量变为0.9，即更容易落入低点，也更难以回避局部最优点
         mome = 0.9
-    optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=mome, weight_decay=1e-8)  # weight_decay质量，认为是前冲的惯性
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 3, gamma=0.1, last_epoch=-1)  # 设置优化器在训练时改变，每3轮lr变为原来的0.1倍,如果中途停止则从头开始
     train_loss = train_model(model, DEVICE, train_loader, optimizer, epoch)  # 训练
     train_loss1 = train_loss  # 训练损失
     train_loss_list.append(train_loss)  # 记录每个epoch训练损失
@@ -90,7 +90,6 @@ for epoch in range(1, EPOCH + 1):  # 每一个epoch  训练一轮   检测一轮
 
     torch.save(model, model_path+fengefu+'train_model.pth')  # 保存训练模型
     torch.cuda.empty_cache()  # 清理内存
-
 
     if epoch%valid_epoch_each == 0:   #  如：每5轮验证一次
 
@@ -117,7 +116,8 @@ for epoch in range(1, EPOCH + 1):  # 每一个epoch  训练一轮   检测一轮
             pass  # 验证损失没有变小则不做处理
 
         torch.cuda.empty_cache()  # 清理内存
-
+    optimizer.step()  # 重要修改TAT  加了这个学习率才会变
+    scheduler.step()  # 重要修改TAT  加了这个学习率才会变
 end = time.perf_counter()  # 记录训练结束时间
 train_time = end-start  # 记录总耗时
 print('Running time: %s Seconds' % train_time)  # 打印总耗时
