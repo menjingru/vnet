@@ -18,18 +18,19 @@ def annos():  # 收集有结节图的名字
     return a  # 返回所有 有结节的图名
 annos = annos()
 def str_to_int(aaa):  # str → list
-    if aaa == "[]":
-        b = []
-    else:
-        aaa = aaa.lstrip("'[[")
-        aaa = aaa.rstrip("]]'")
-        b = aaa.split("], [")
-        for i in range(len(b)):
-            b[i] = b[i].split(",")
-            b[i][0] = int(float(b[i][0]))
-            b[i][1] = int(float(b[i][1]))
-            b[i][2] = int(float(b[i][2]))
-            b[i][3] = int(float(b[i][3]))
+    b = eval(aaa)
+    # if aaa == "[]":
+    #     b = []
+    # else:
+    #     aaa = aaa.lstrip("'[[")
+    #     aaa = aaa.rstrip("]]'")
+    #     b = aaa.split("], [")
+    #     for i in range(len(b)):
+    #         b[i] = b[i].split(",")
+    #         b[i][0] = int(float(b[i][0]))
+    #         b[i][1] = int(float(b[i][1]))
+    #         b[i][2] = int(float(b[i][2]))
+    #         b[i][3] = int(float(b[i][3]))
     return b
 
 def annos_list():  # 收集有结节图的名字
