@@ -116,8 +116,8 @@ for epoch in range(1, EPOCH + 1):  # 每一个epoch  训练一轮   检测一轮
             pass  # 验证损失没有变小则不做处理
 
         torch.cuda.empty_cache()  # 清理内存
-    optimizer.step()  # 重要修改TAT  加了这个学习率才会变
-    scheduler.step()  # 重要修改TAT  加了这个学习率才会变
+    #optimizer.step()  # 重要修改TAT  加了这个学习率才会变
+    #scheduler.step()  # 重要修改TAT  加了这个学习率才会变
 end = time.perf_counter()  # 记录训练结束时间
 train_time = end-start  # 记录总耗时
 print('Running time: %s Seconds' % train_time)  # 打印总耗时
