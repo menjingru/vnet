@@ -11,7 +11,11 @@ import os
 import pandas as pd
 from scipy.ndimage.interpolation import zoom
 import xlrd
-
+"""
+功能：数据预处理主函数
+包含生成信息表格和具体预处理操作
+    bbox_annos_()    主函数
+"""
 
 # 在开始之前，由于我们需要只保留有结节的图像，因此从annotations中取得有结节的图像名字。①进行结节中心的坐标变换，并保存到 bbox_annos
 #                                                                        ②提取结节不为空的图的名字 annos()  这个在主函数
@@ -46,7 +50,7 @@ def bbox_annos_():  # 产生bbox_annos文件，处理所有图的坐标转换
     c = np.array(pd.read_csv(annos_csv))  # c为将annotations读取为数组
     d = []  # 准备放坐标转换后的 ["名字",[[结节1],[结节2],...]]
     for i in range(10):  # 默认你10个subset都下完了
-        file_list = os.listdir(luna_path + fengefu+"subset%d" % i)  # 打开D:\datasets\LUNA16\subset0  遍历10个subset
+        file_list = os.listdir(str(Path(luna_path)/f"subset{i}"))  # 打开D:\datasets\LUNA16\subset0  遍历10个subset
         for ii in file_list:  # 遍历如 subset0 内所有文件
             if len(ii.split(".m")) == 2:  # 如果文件名是mhd文件的话
                 name = ii.split(".m")[0]  # 取出文件名，去掉后缀，得到图名
@@ -54,7 +58,7 @@ def bbox_annos_():  # 产生bbox_annos文件，处理所有图的坐标转换
                 numpyImage, origin, spacing, fanzhuan = read_data(ct_image_path)  # 读取这个mhd文件
                 one_annos = get_raw_label(name, numpyImage, c, origin, fanzhuan)  # 进行坐标变换
                 d.append([name,one_annos])  # 把变换后的 ["名字",[[结节1],[结节2],...]] 添加到d里
-    bbox_annos = pd.DataFrame(d)  # 把 d 转换成excel文件
+    bbox_annos = pd.DataFrame(d, columns=['name', 'annos'])  # 把 d 转换成excel文件
     bbox_annos.to_excel(new_bbox_annos_path)  # 保存到new_bbox_annos_path
 
 
@@ -78,11 +82,11 @@ def find_xml_path(name1):
     list1 = []
     for file_list in os.listdir(xml_file_path):  # 遍历xml_file_path文件夹下所有文件
         print(file_list)  # 打印进度
-        for ii in os.listdir(xml_file_path + fengefu+file_list):  # 取得xml_file_path文件夹下文件的列表，如157  185 ...
-            aim_path = xml_file_path + fengefu+ file_list + fengefu+ii  # 取得xml_file_path文件夹下的  157文件夹下的  文件，如158  159 ..
+        for ii in os.listdir(str(Path(xml_file_path)/file_list)):  # 取得xml_file_path文件夹下文件的列表，如157  185 ...
+            aim_path = str(Path(xml_file_path)/file_list/ii)  # 取得xml_file_path文件夹下的  157文件夹下的  文件，如158  159 ..
             with open(aim_path) as f:  # 打开这个文件
                 if name(f) == name1:  # 取得这个文件的文件名，如果与输入文件名相符：
-                    path = xml_file_path + fengefu+ file_list + fengefu + ii  # 保留这个文件的绝对地址为path（爷找到了）
+                    path = str(Path(xml_file_path)/file_list/ii)  # 保留这个文件的绝对地址为path（爷找到了）
                     list1.append(path)    # 把这个绝对地址装到 list1 里去
                     print(path)  # 打印绝对地址
         if list1 !=[]:
@@ -91,10 +95,10 @@ def find_xml_path(name1):
 def find_mhd_path(name1):
     for file_list in os.listdir(luna_path):  # 遍历luna16文件夹下所有文件
         if file_list.find("subset") != -1:  # 在有subset的文件夹下查找  这一句是为了避免找到seg-lungs-LUNA16文件夹里边去
-            for ii in os.listdir(luna_path + fengefu+ file_list):  # 打开luna16文件夹下的文件夹 如subset0，遍历文件
+            for ii in os.listdir(str(Path(luna_path)/file_list)):  # 打开luna16文件夹下的文件夹 如subset0，遍历文件
                 if len(ii.split(".m")) >1:  # 如果文件中有".m"字符，len就会为2，也即 len > 1
                     if ii.split((".m"))[0] == name1:  # 如果文件名去掉".mhd"后与输入的案例名name一致
-                        path = luna_path + fengefu+ file_list + fengefu+ ii  # 取得该文件的绝对地址
+                        path = str(Path(luna_path)/file_list/ii)  # 取得该文件的绝对地址
                         print(path)
                         return path
 
