@@ -30,8 +30,8 @@ torch.cuda.empty_cache()  # 时不时清下内存
 data_path = []  # 装图所在subset的绝对地址，如 [D:\datasets\sk_output\bbox_image\subset0,D:\datasets\sk_output\bbox_image\subset1,..]
 label_path = []  # 装标签所在subset的绝对地址，与上一行一致，为对应关系
 for i in range(0,8):  # 0,1,2,3,4,5,6,7   训练集
-    data_path.append(bbox_img_path+fengefu+'subset%d' % i)  # 放入对应的训练集subset的绝对地址
-    label_path.append(bbox_msk_path+fengefu+'subset%d' % i)
+    data_path.append(str(Path(bbox_img_path)/f'subset{i}'))  # 放入对应的训练集subset的绝对地址
+    label_path.append(str(Path(bbox_msk_path)/f'subset{i}'))
 dataset_train = myDataset(data_path, label_path)  # 送入dataset
 print(len(dataset_train))
 train_loader = torch.utils.data.DataLoader(dataset_train,  # 生成dataloader
@@ -44,8 +44,8 @@ print("train_dataloader_ok")
 data_valid_path = []  # 装图所在subset的绝对地址
 label_valid_path = []  # 装标签所在subset的绝对地址
 for j in range(8,9):  # 8   验证集
-    data_valid_path.append(bbox_img_path+fengefu+'subset%d' % j)  # 放入对应的验证集subset的绝对地址
-    label_valid_path.append(bbox_msk_path+fengefu+'subset%d' % j)
+    data_valid_path.append(str(Path(bbox_img_path)/f'subset{j}'))  # 放入对应的验证集subset的绝对地址
+    label_valid_path.append(str(Path(bbox_msk_path)/f'subset{j}'))
 dataset_valid = myDataset(data_valid_path, label_valid_path)  # 送入dataset
 valid_loader = torch.utils.data.DataLoader(dataset_valid,  # 生成dataloader
                                                batch_size=BATCH_SIZE, shuffle=False,
@@ -55,8 +55,8 @@ print("valid_dataloader_ok")
 data_test_path = []  # 装图所在subset的绝对地址
 label_test_path = []  # 装标签所在subset的绝对地址
 for ii in range(9,10):  # 9   测试集
-    data_test_path.append(bbox_img_path+fengefu+'subset%d' % ii)  # 放入对应的测试集subset的绝对地址
-    label_test_path.append(bbox_msk_path+fengefu+'subset%d' % ii)
+    data_test_path.append(str(Path(bbox_img_path)/f'subset{ii}'))  # 放入对应的测试集subset的绝对地址
+    label_test_path.append(str(Path(bbox_msk_path)/f'subset{ii}'))
 dataset_test = myDataset(data_test_path, label_test_path)  # 送入dataset
 test_loader = torch.utils.data.DataLoader(dataset_test,  # 生成dataloader
                                               batch_size=BATCH_SIZE, shuffle=False,
@@ -75,21 +75,23 @@ valid_loss_list = []  # 用来记录验证损失
 minnum = 0  # 寻找最小损失，损失最小意味着模型最佳
 mome = 0.99  # 动量，可以认为是前冲的速度
 optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=mome, weight_decay=1e-8)  # weight_decay质量，认为是前冲的惯性
-scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 3, gamma=0.1, last_epoch=-1)  # 设置优化器在训练时改变，每3轮lr变为原来的0.1倍,如果中途停止则从头开始
+scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 3, gamma=0.9,
+                                            last_epoch=-1)  # 设置优化器在训练时改变，每3轮lr变为原来的0.1倍,如果中途停止则从头开始
 
 train_loss1 = 0.0
 lr = 1e-1
 for epoch in range(1, EPOCH + 1):  # 每一个epoch  训练一轮   检测一轮
     if epoch ==180:  # 180轮时动量变为0.9，即更容易落入低点，也更难以回避局部最优点
         mome = 0.9
-    train_loss = train_model(model, DEVICE, train_loader, optimizer, epoch)  # 训练
+    train_loss = train_model(model, DEVICE, train_loader, optimizer,scheduler, epoch)  # 训练
     train_loss1 = train_loss  # 训练损失
     train_loss_list.append(train_loss)  # 记录每个epoch训练损失
     train_loss_pd = pd.DataFrame(train_loss_list)  # 存成excel格式
     train_loss_pd.to_excel(zhibiao_path + "/第%d个epoch的训练损失.xlsx" %(epoch))
 
-    torch.save(model, model_path+fengefu+'train_model.pth')  # 保存训练模型
+    torch.save(model, str(Path(model_path)/'train_model.pth'))  # 保存训练模型
     torch.cuda.empty_cache()  # 清理内存
+
 
     if epoch%valid_epoch_each == 0:   #  如：每5轮验证一次
 
@@ -100,7 +102,7 @@ for epoch in range(1, EPOCH + 1):  # 每一个epoch  训练一轮   检测一轮
         valid_loss_pd.to_excel(zhibiao_path + "/第%d个epoch的验证损失.xlsx" % (epoch))
 
         if epoch == valid_epoch_each:  # 第一此验证，如：epoch==5
-            torch.save(model, model_path+fengefu+'best_model.pth')  # 保存为最好模型
+            torch.save(model, str(Path(model_path)/'best_model.pth'))  # 保存为最好模型
             minnum = valid_loss  # 刚开始，令min为该loss
             print("minnum",minnum)  # 打印最小验证损失
 
@@ -108,7 +110,7 @@ for epoch in range(1, EPOCH + 1):  # 每一个epoch  训练一轮   检测一轮
 
             print("valid_loss < minnum",valid_loss, "<", minnum)  # 打印 这一轮验证损失更小，所以准备更新了
             minnum = valid_loss  # 最小验证损失 更新为 这一轮验证损失
-            torch.save(model, model_path+fengefu+'best_model.pth')  # 保存为最好模型，这里是直接覆盖了之前的best_model
+            torch.save(model, str(Path(model_path)/'best_model.pth'))  # 保存为最好模型，这里是直接覆盖了之前的best_model
             zhibiao = valid_zhibiao  # 把指标也记录一下
             zhibiao_pd = pd.DataFrame(zhibiao)  # 存成excel格式
             zhibiao_pd.to_excel(zhibiao_path + "/目前为止最合适的model指标：第%d个epoch的验证指标[PA, IOU, DICE, P, R, F1].xlsx" % epoch)
@@ -116,8 +118,8 @@ for epoch in range(1, EPOCH + 1):  # 每一个epoch  训练一轮   检测一轮
             pass  # 验证损失没有变小则不做处理
 
         torch.cuda.empty_cache()  # 清理内存
-    #optimizer.step()  # 重要修改TAT  加了这个学习率才会变
-    #scheduler.step()  # 重要修改TAT  加了这个学习率才会变
+    # optimizer.step()
+    # scheduler.step()
 end = time.perf_counter()  # 记录训练结束时间
 train_time = end-start  # 记录总耗时
 print('Running time: %s Seconds' % train_time)  # 打印总耗时
@@ -135,7 +137,7 @@ test_loss_list = []  # 准备放测试损失
 test_zhibiao_list = []  # 准备放测试指标
 
 
-model = torch.load(model_path +fengefu +'best_model.pth')  # 载入最好模型
+model = torch.load(str(Path(model_path)/'best_model.pth'))  # 载入最好模型
 model = model.to(DEVICE)  # 部署到gpu或cpu上
 
 test_loss, test_zhibiao = test_model(model, DEVICE, test_loader,EPOCH,test=True)  # 测试
