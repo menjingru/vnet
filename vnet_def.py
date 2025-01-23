@@ -219,35 +219,24 @@ import torch.nn.functional as f
 
 
 class res_block(nn.Module):  ##nn.Module
-    def __init__(self, i_channel, o_channel,lei):
+    def __init__(self, i_channel, o_channel, lei, dropout=False):
         super(res_block, self).__init__()
         self.in_c = i_channel
         self.out_c = o_channel
 
-        if self.in_c == 1:
-            self.conv1 = nn.Conv3d(in_channels=i_channel, out_channels=o_channel, kernel_size=5, stride=1, padding=2)
-
-        elif self.in_c ==80:
-            self.conv1 = nn.Conv3d(in_channels=i_channel, out_channels=o_channel, kernel_size=5, stride=1, padding=2)
-
-        else:
-
-            self.conv1 = nn.Conv3d(in_channels=i_channel, out_channels=i_channel, kernel_size=5, stride=1, padding=2)
-
+        self.conv1 = nn.Conv3d(in_channels=i_channel, out_channels=i_channel, kernel_size=5, stride=1, padding=2)
         self.conv2 = nn.Conv3d(in_channels=i_channel, out_channels=o_channel, kernel_size=5, stride=1, padding=2)
-
-
-        self.conv3 = nn.Conv3d(in_channels=o_channel, out_channels=o_channel, kernel_size=2, stride=2).cuda()  ###  卷积下采样
-
-        self.conv4 = nn.ConvTranspose3d(in_channels=o_channel, out_channels=o_channel, kernel_size=2, stride=2).cuda()   ###  反卷积上采样
-
-        self.conv5 = nn.Conv3d(in_channels=i_channel, out_channels=o_channel, kernel_size=1, stride=1).cuda()   ###  点卷积
+        self.conv3 = nn.Conv3d(in_channels=i_channel, out_channels=o_channel, kernel_size=2, stride=2).cuda()  # 卷积下采样
+        self.conv4 = nn.ConvTranspose3d(in_channels=i_channel, out_channels=o_channel, kernel_size=2, stride=2).cuda()  # 反卷积上采样
+        self.conv5 = nn.Conv3d(in_channels=i_channel, out_channels=o_channel, kernel_size=1, stride=1).cuda()  # 点卷积
 
         self.bn = nn.BatchNorm3d(i_channel).cuda()
         self.bn1 = nn.BatchNorm3d(o_channel).cuda()
         self.prelu = nn.ELU().cuda()
         self.lei = lei
+        self.dropout = dropout
         self.drop = nn.Dropout3d()
+
 
     def forward(self,x):
         if self.lei == "forward1":
@@ -260,42 +249,55 @@ class res_block(nn.Module):  ##nn.Module
             out = self.deconv(x)
         elif self.lei == "upconv":
             out = self.upconv(x)
+        elif self.lei == "forward10":
+            out = self.forward10(x)
+        elif self.lei == "forward0":
+            out = self.forward0(x)
         else:
             out = self.pointconv(x)
         return out
 
 
-
-
-    def forward1(self, x):
+    def forward0(self, x):
         x = x.to(torch.float32)
-        res = x   ###   记录下输入时的 x
-        res1 = res_block(self.in_c,self.out_c,"pointconv")
-        res = res1(res)
-        # print(x.shape)           ####记下   torch.Size([1, 1, 192, 160, 160])
-        out = self.conv1(x)
-        # print(out.shape)         ####记下   torch.Size([1, 16, 192, 160, 160])
+        res = torch.cat((x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x),1)
+
+        out = self.conv2(x)
         out = self.bn1(out)
-        out = self.drop(out)
         out = self.prelu(out)
         out = res.add(out)
+        out = self.prelu(out)
         return out
 
-    def forward2(self,x ):
+    def forward1(self, x):
+	
+        x = x.to(torch.float32)
+        res = x
+        res1 = res_block(self.in_c,self.out_c,"pointconv")
+        res = res1(res)
+	
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = self.prelu(out)
+
+        out = res.add(out)
+        out = self.prelu(out)
+        return out
+
+    def forward2(self, x):
         res = x   ###   记录下输入时的 x
         res1 = res_block(self.in_c, self.out_c, "pointconv")
         res = res1(res)
+
         out = self.conv1(x)
         out = self.bn(out)
-        out = self.drop(out)
         out = self.prelu(out)
-        out = self.conv2(out)
+        out = self.conv1(out)
         out = self.bn1(out)
-        out = self.drop(out)
         out = self.prelu(out)
 
         out = res.add(out)
-
+        out = self.prelu(out)
 
         return out
 
@@ -303,39 +305,54 @@ class res_block(nn.Module):  ##nn.Module
         res = x   ###   记录下输入时的 x
         res1 = res_block(self.in_c, self.out_c, "pointconv")
         res = res1(res)
+
         out = self.conv1(x)
         out = self.bn(out)
-        out = self.drop(out)
         out = self.prelu(out)
         out = self.conv1(out)
-        out = self.bn(out)
-        out = self.drop(out)
-        out = self.prelu(out)
-        out = self.conv2(out)
         out = self.bn1(out)
-        out = self.drop(out)
+        out = self.prelu(out)
+        out = self.conv1(out)
+        out = self.bn1(out)
         out = self.prelu(out)
 
         out = res.add(out)
+        out = self.prelu(out)
 
+        return out
 
+    def forward10(self, x):
+        out = self.conv1(x)
+        out = self.bn(out)
+        out = self.prelu(out)
+        out = self.conv5(out)
         return out
 
     def deconv(self,x):
+	
         out = self.conv3(x)
-        out = self.bn(out)
-        out = self.prelu(out)
-        return out
-
-    def upconv(self,x):
-        out = self.conv4(x)
-        out = self.bn(out)
-        out = self.prelu(out)
-        return out
-
-    def pointconv(self,x):
-        out = self.conv5(x)
         out = self.bn1(out)
         out = self.prelu(out)
+        if self.dropout:
+            out = self.drop(out)
+        return out
+
+    def upconv(self,out):
+        if self.dropout:
+            out = self.drop(out)
+
+        out = self.conv4(out)
+        out = self.bn1(out)
+        out = self.prelu(out)
+
+
+        return out
+
+
+    def pointconv(self,x):
+        out = self.prelu(x)
+        out = self.conv5(out)
+        out = self.bn1(out)
+        
         return out
 
