@@ -40,13 +40,15 @@ class dice_loss(nn.Module):  # dice损失，做反向传播
 
         for i in range(n):  # 遍历本批次所有图
             all_dice += dice_list[i]  # 求和
-        dice_loss = all_dice/n
+        dice_loss = all_dice/n/2
 
         return dice_loss  # 返回本批次所有图的平均dice loss
 
+
 Loss = dice_loss().to(DEVICE)  # 损失函数布置到gpu或cpu上
 
-def train_model(model, device, train_loader, optimizer, epoch):  # 训练模型
+
+def train_model(model, device, train_loader, optimizer,scheduler, epoch):  # 训练模型
     # 模型训练-----调取方法
     model.train()  # 用来训练的
     loss_need = []  # 记录loss
@@ -58,9 +60,12 @@ def train_model(model, device, train_loader, optimizer, epoch):  # 训练模型
         optimizer.zero_grad()  # 梯度归零
         loss.backward()  # 反向传播
         optimizer.step()  # 优化器走一步
+
         train_loss = loss.item()  # 取得损失值
         loss_need.append(train_loss)  # 放到loss_need列表里
         tqdr.set_description("Train Epoch : {} \t train Loss : {:.6f} ".format(epoch, loss.item()))  # 实时显示损失
+    #scheduler.step()
+    print(optimizer.state_dict()['param_groups'][0]['lr'], scheduler.state_dict()['_last_lr'][0])
     train_loss = np.mean(loss_need)  # 求平均
     print("train_loss", train_loss)  # 打印平均损失
     return train_loss,loss_need  # 返回平均损失，损失列表
@@ -120,11 +125,42 @@ def test_model(model, device, test_loader, epoch,test):    # 加了个test  1是
         return test_loss, [PA, IOU, DICE, P, R, F1]
 
 
-
-
-
-
 class myDataset(Dataset):
+    def __init__(self, data_path, label_path):   ###  transform 我没写
+        self.annos_img, self.annos_label = self.get_img_label(data_path, label_path)
+
+    def __getitem__(self, index):
+        img_all = self.annos_img[index]
+        label_all = self.annos_label[index]
+        img = np.load(img_all)    # 载入的是图片地址
+        label = np.load(label_all)    # 载入的是label地址
+
+        img = np.expand_dims(img,0)  ##(1, 96, 96, 96)
+        img = torch.tensor(img)
+        img = img.type(torch.FloatTensor)
+        label = torch.Tensor(label).long()  ##(96, 96, 96) label不用升通道维度
+        torch.cuda.empty_cache()
+        return img,label    ### 从这里出去还是96*96*96
+
+    def __len__(self):
+        return len(self.annos_img)
+
+    @staticmethod
+    def get_img_label(data_path, label_path):   ###  list 地址下所有图片的绝对地址
+        data_path = [Path(i).name for i in data_path]
+        msgs = pd.read_excel(msg_path)
+        img_paths = []
+        lbl_paths = []
+        for i,v in msgs.iterrows():
+            img_path = v['img_path']
+            if Path(img_path).parent.name in data_path:
+                lbl_path = v['lbl_path']
+                img_paths.append(img_path)
+                lbl_paths.append(lbl_path)
+        return img_paths,lbl_paths  # 返回的也就是图像路径列表 和 标签路径列表
+
+
+class cutDataset(Dataset):
 
     def __init__(self, data_path, label_path):   ###  transform 我没写
         self.data = self.get_img_label(data_path)   ## 图的位置列表
@@ -168,18 +204,26 @@ class myDataset(Dataset):
             cut_list.append(a)
             cut_list.append(b)
 
+
         cut_list = [round(i) for i in cut_list]
         img = img[cut_list[0]:cut_list[1],cut_list[2]:cut_list[3],cut_list[4]:cut_list[5]]   ###  z,y,x
         label = label[cut_list[0]:cut_list[1],cut_list[2]:cut_list[3],cut_list[4]:cut_list[5]]   ###  z,y,x
+        one_path_img = str(Path(output_path) / "bbox_image_npy" / Path(img_all[0]).parent.name / (
+                    Path(img_all[0]).stem + f'_{img_all[-1]}.npy'))
+        Path(one_path_img).parent.mkdir(exist_ok=True, parents=True)
+        np.save(one_path_img, img)
+        one_path_label = str(Path(output_path) / "bbox_mask_npy" / Path(img_all[0]).parent.name / (
+                    Path(img_all[0]).stem + f'_{img_all[-1]}.npy'))
+        Path(one_path_label).parent.mkdir(exist_ok=True, parents=True)
+        np.save(one_path_label, label)
+        one_list = [str(one_path_img),str(one_path_label),str(img_all[1])]
 
-        # plot_3d(img)
-        # plot_3d(label)
-        img = np.expand_dims(img,0)  ##(1, 96, 96, 96)
-        img = torch.tensor(img)
-        img = img.type(torch.FloatTensor)
-        label = torch.Tensor(label).long()  ##(96, 96, 96) label不用升通道维度
-        torch.cuda.empty_cache()
-        return img,label    ### 从这里出去还是96*96*96
+        # img = np.expand_dims(img,0)  ##(1, 96, 96, 96)
+        # img = torch.tensor(img)
+        # img = img.type(torch.FloatTensor)
+        # label = torch.Tensor(label).long()  ##(96, 96, 96) label不用升通道维度
+        # torch.cuda.empty_cache()
+        return one_list    ### 从这里出去还是96*96*96
 
 
     def __len__(self):
@@ -203,21 +247,13 @@ class myDataset(Dataset):
         ### ok   ,   anoos 是处理好的列表了，我只需要把他们对比一下是否在列表里，然后根据列表里的坐标输出一个列表  就可以了   在__getitem__里边把它切下来就行
 
         for u in img_path:  # 图的路径
-            if xitong== "windows":
-                name = '1'+u.split(r"\1")[-1].split(".np")[0]  # 拿到图的名字
-            else:
-                name = u.split(r"/")[-1].split(".np")[0]  # 拿到图的名字
+            name = Path(u).stem
             for one in annos_list:  # 遍历有结节的图
                 if one[0] == name:  # 如果有结节的图的名字 == 输入的图的名字
                     for l in range(len(one[1])):  # 数一数有几个结节
                         annos_path.append(
-                            [u, [one[1][l][0], one[1][l][1], one[1][l][2]], one[1][l][3]])  # 图的地址，结节的中心，结节的半径
+                            [u, [one[1][l][0], one[1][l][1], one[1][l][2]], one[1][l][3],l])  # 图的地址，结节的中心
         return annos_path  # ###半径最大才12
-
-
-
-
-
 
 
 def zhibiao(data,label):   #   data  n,2,96,96,96  label  n,96,96,96
@@ -346,11 +382,11 @@ def use_plot_2d(image,output,z = 132,batch_index=0,i=0,true_label=False):
 
     path = zhibiao_path       #  我真的懒得引入参数了，这个path 就是 zhibiao_path
     if true_label:
-        if not os.path.exists(path +fengefu+'true_pic'):  # 建立subset文件夹
+        if not os.path.exists(path +fengefu+'true_pic'):  # groud truth
             os.mkdir(path +fengefu+'true_pic')
         plt.savefig(path +'/true_pic/%d_%d.jpg'%(batch_index,i))
     else:
-        if not os.path.exists(path +fengefu+'pic'):  # 建立subset文件夹
+        if not os.path.exists(path +fengefu+'pic'):  # predict
             os.mkdir(path +fengefu+'pic')
         plt.savefig(path +'/pic/%d_%d.jpg'%(batch_index,i))
     plt.close()
