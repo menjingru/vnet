@@ -382,11 +382,11 @@ def use_plot_2d(image,output,z = 132,batch_index=0,i=0,true_label=False):
 
     path = zhibiao_path       #  我真的懒得引入参数了，这个path 就是 zhibiao_path
     if true_label:
-        if not os.path.exists(path +fengefu+'true_pic'):  # groud truth
-            os.mkdir(path +fengefu+'true_pic')
-        plt.savefig(path +'/true_pic/%d_%d.jpg'%(batch_index,i))
+        if not os.path.exists(str(Path(path)/'true_pic')):  # groud truth
+            os.mkdir(str(Path(path)/'true_pic'))
+        plt.savefig(str(Path(path)/'true_pic'/f'{batch_index}_{i}.jpg'))
     else:
-        if not os.path.exists(path +fengefu+'pic'):  # predict
-            os.mkdir(path +fengefu+'pic')
-        plt.savefig(path +'/pic/%d_%d.jpg'%(batch_index,i))
+        if not os.path.exists(str(Path(path)/'pic')):  # predict
+            os.mkdir(str(Path(path)/'pic'))
+        plt.savefig(str(path)/'pic'/f'{batch_index}_{i}.jpg'))
     plt.close()
