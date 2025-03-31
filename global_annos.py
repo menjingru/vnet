@@ -9,6 +9,6 @@ def annos():  # 收集有结节图的名字
     a = []
     for ind,val in annos.iterrows():
         if val['annos'] != '[]':
-            a.append(val['name'])
+            a.append(list(val)[1:])  #(val['name'])
     return a  # 返回所有 有结节的图名
 annos = annos()
