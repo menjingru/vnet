@@ -250,9 +250,10 @@ class cutDataset(Dataset):
             name = Path(u).stem
             for one in annos_list:  # 遍历有结节的图
                 if one[0] == name:  # 如果有结节的图的名字 == 输入的图的名字
-                    for l in range(len(one[1])):  # 数一数有几个结节
+                    one1_list = eval(one[1])     # gai2
+                    for l in range(len(one1_list)):  # 数一数有几个结节
                         annos_path.append(
-                            [u, [one[1][l][0], one[1][l][1], one[1][l][2]], one[1][l][3],l])  # 图的地址，结节的中心
+                            [u, [one1_list[l][0], one1_list[l][1], one1_list[l][2]], one1_list[l][3],l])  # 图的地址，结节的中心
         return annos_path  # ###半径最大才12
 
 
